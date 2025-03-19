@@ -73,7 +73,7 @@ export function GeminiKeyInput({ onApiKeySet }: GeminiKeyInputProps) {
         ) : (
           <div className="flex items-center">
             <AlertCircle className="h-4 w-4 mr-1 text-amber-500" />
-            <span>Enter your Gemini API key to enable AI task breakdown.</span>
+            <span>API key is optional. Without it, tasks will be added without AI breakdown.</span>
           </div>
         )}
       </div>

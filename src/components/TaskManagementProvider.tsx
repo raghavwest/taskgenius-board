@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
 // Mock of Python API types
 interface Ticket {
@@ -308,6 +308,22 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
           tickets: []
         };
         
+        // Create a default ticket if there's no API key to break down the task
+        if (!geminiApiKey) {
+          newTask.tickets = [
+            {
+              id: `ticket_${newTask.id}_default`,
+              title: title,
+              description: description,
+              status: "To Do",
+              priority: 1,
+              created_at: new Date().toISOString(),
+              tags: ["main-task"],
+              estimated_time: 240
+            }
+          ];
+        }
+        
         setTasks(prev => [...prev, newTask]);
         resolve(newTask);
       }, 1000); // Simulate API delay
@@ -320,7 +336,7 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
     
     try {
       if (!geminiApiKey) {
-        toast("No API key found", {
+        sonnerToast("No API key found", {
           description: "Please add your Gemini API key to enable AI-powered task breakdown",
           duration: 5000,
         });
@@ -415,14 +431,14 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
         return newTasks;
       });
       
-      toast("Task breakdown complete", {
+      sonnerToast("Task breakdown complete", {
         description: `${newTickets.length} tickets created from your task`,
       });
       
       return newTickets;
     } catch (error) {
       console.error("Error generating tickets:", error);
-      toast("Error generating tickets", {
+      sonnerToast("Error generating tickets", {
         description: "There was an error breaking down your task. Please try again.",
       });
       return [];
@@ -453,7 +469,7 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
       });
     });
     
-    toast({
+    uiToast({
       title: "Status updated",
       description: `Ticket moved to ${newStatus}`,
     });

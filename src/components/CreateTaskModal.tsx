@@ -31,12 +31,22 @@ export function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
     try {
       const newTask = await createTask(title, description);
       setCreatedTaskId(newTask.id);
-      setStep("breakdown");
       
-      toast({
-        title: "Task created",
-        description: "Now let's break it down into smaller tickets",
-      });
+      // Only show breakdown step if API key is available
+      if (geminiApiKey) {
+        setStep("breakdown");
+        toast({
+          title: "Task created",
+          description: "Now let's break it down into smaller tickets",
+        });
+      } else {
+        // If no API key, just close the modal and show success message
+        toast({
+          title: "Task created successfully",
+          description: "Your task has been added to the board",
+        });
+        handleCloseModal();
+      }
     } catch (error) {
       console.error("Error creating task:", error);
       toast({
@@ -63,6 +73,14 @@ export function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
         variant: "destructive",
       });
     }
+  };
+  
+  const handleSkip = () => {
+    toast({
+      title: "Task added",
+      description: "Your task has been added without AI breakdown",
+    });
+    handleCloseModal();
   };
   
   const handleCloseModal = () => {
@@ -186,7 +204,7 @@ export function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleCloseModal}
+                onClick={handleSkip}
                 className="border-muted bg-transparent hover:bg-muted/20"
               >
                 Skip
