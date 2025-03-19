@@ -28,18 +28,22 @@ export function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
     if (!title.trim()) return;
     
     setIsSubmitting(true);
+    
     try {
+      console.log("Creating task. API key status:", geminiApiKey ? "Available" : "Not available");
       const newTask = await createTask(title, description);
       setCreatedTaskId(newTask.id);
       
       // Only show breakdown step if API key is available
       if (geminiApiKey) {
+        console.log("API key available, proceeding to breakdown step");
         setStep("breakdown");
         toast({
           title: "Task created",
           description: "Now let's break it down into smaller tickets",
         });
       } else {
+        console.log("No API key, task created with default ticket");
         // If no API key, just close the modal and show success message
         toast({
           title: "Task created successfully",
@@ -54,15 +58,21 @@ export function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
         description: "There was an error creating your task. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
   
   const handleGenerateTickets = async () => {
-    if (!createdTaskId) return;
+    if (!createdTaskId) {
+      console.error("No task ID available for ticket generation");
+      return;
+    }
     
     try {
+      console.log("Generating tickets for task:", createdTaskId);
       await generateTickets(createdTaskId);
+      console.log("Ticket generation complete");
       // Reset the form and close the modal
       handleCloseModal();
     } catch (error) {

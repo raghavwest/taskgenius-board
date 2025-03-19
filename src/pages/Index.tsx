@@ -14,6 +14,11 @@ const Index = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
   
+  const handleApiKeySet = (key: string) => {
+    setGeminiApiKey(key || null);
+    console.log("API key set:", key ? "Key provided" : "No key");
+  };
+  
   return (
     <TaskManagementProvider>
       <div className="min-h-screen bg-background">
@@ -21,7 +26,7 @@ const Index = () => {
         
         <main className="pt-24 px-4 pb-8">
           <div className="w-full max-w-7xl mx-auto">
-            <GeminiKeyInput onApiKeySet={(key) => setGeminiApiKey(key)} />
+            <GeminiKeyInput onApiKeySet={handleApiKeySet} />
             
             <Tabs defaultValue="kanban" className="w-full">
               <div className="glass rounded-full p-1 mb-6 max-w-fit mx-auto">

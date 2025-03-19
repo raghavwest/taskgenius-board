@@ -42,7 +42,7 @@ export function GeminiKeyInput({ onApiKeySet }: GeminiKeyInputProps) {
 
     toast({
       title: "API Key Saved",
-      description: "Your Gemini API key has been saved",
+      description: "Your Gemini API key has been saved. Tasks will now be broken down using AI.",
     });
   };
 
@@ -51,6 +51,7 @@ export function GeminiKeyInput({ onApiKeySet }: GeminiKeyInputProps) {
     setApiKey("");
     setIsStored(false);
     setIsVisible(false);
+    onApiKeySet("");
     
     toast({
       title: "API Key Removed",

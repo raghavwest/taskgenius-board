@@ -269,6 +269,7 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
     const storedKey = localStorage.getItem("gemini_api_key");
     if (storedKey) {
       setGeminiApiKey(storedKey);
+      console.log("API key loaded from localStorage");
     }
   }, []);
   
@@ -300,6 +301,8 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
   const createTask = async (title: string, description: string): Promise<Task> => {
     return new Promise((resolve) => {
       setTimeout(() => {
+        console.log("Creating task with API key:", geminiApiKey ? "Present" : "Not present");
+        
         const newTask: Task = {
           id: `task_${Date.now()}`,
           title,
@@ -310,9 +313,10 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
         
         // Create a default ticket if there's no API key to break down the task
         if (!geminiApiKey) {
+          console.log("No API key available, creating default ticket");
           newTask.tickets = [
             {
-              id: `ticket_${newTask.id}_default`,
+              id: `ticket_${Date.now()}_default`,
               title: title,
               description: description,
               status: "To Do",
@@ -333,6 +337,8 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
   // Generate tickets for a task using Gemini
   const generateTickets = async (taskId: string): Promise<Ticket[]> => {
     setIsGeneratingTickets(true);
+    console.log("Generating tickets for task:", taskId);
+    console.log("API key status:", geminiApiKey ? "Available" : "Not available");
     
     try {
       if (!geminiApiKey) {
@@ -347,6 +353,8 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
       if (taskIndex === -1) {
         throw new Error("Task not found");
       }
+      
+      console.log("Found task:", tasks[taskIndex].title);
       
       // In a real implementation, this would call Google's Generative AI API
       // For now we'll use a simulated response
@@ -421,6 +429,8 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
         tags: ticketData.tags,
         estimated_time: ticketData.estimated_time
       }));
+      
+      console.log(`Generated ${newTickets.length} tickets`);
       
       setTasks(prev => {
         const newTasks = [...prev];
