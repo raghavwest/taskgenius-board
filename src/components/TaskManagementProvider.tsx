@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 // Mock of Python API types
 interface Ticket {
@@ -38,6 +39,9 @@ interface TaskManagementContextProps {
   tasks: Task[];
   kanbanData: KanbanData;
   groupedTickets: GroupedTickets;
+  geminiApiKey: string | null;
+  setGeminiApiKey: (key: string) => void;
+  isGeneratingTickets: boolean;
   createTask: (title: string, description: string) => Promise<Task>;
   generateTickets: (taskId: string) => Promise<Ticket[]>;
   updateTicketStatus: (ticketId: string, newStatus: string) => void;
@@ -256,7 +260,17 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
     "Done": []
   });
   const [groupedTickets, setGroupedTickets] = useState<GroupedTickets>(mockGroupedTickets);
-  const { toast } = useToast();
+  const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
+  const [isGeneratingTickets, setIsGeneratingTickets] = useState<boolean>(false);
+  const { toast: uiToast } = useToast();
+  
+  useEffect(() => {
+    // Load API key from localStorage on mount
+    const storedKey = localStorage.getItem("gemini_api_key");
+    if (storedKey) {
+      setGeminiApiKey(storedKey);
+    }
+  }, []);
   
   // Generate Kanban data on tasks change
   useEffect(() => {
@@ -284,11 +298,10 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
   
   // Create a new task
   const createTask = async (title: string, description: string): Promise<Task> => {
-    // In a real implementation, this would call your API
     return new Promise((resolve) => {
       setTimeout(() => {
         const newTask: Task = {
-          id: `task_${tasks.length + 1}`,
+          id: `task_${Date.now()}`,
           title,
           description,
           created_at: new Date().toISOString(),
@@ -301,73 +314,121 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
     });
   };
   
-  // Generate tickets for a task
+  // Generate tickets for a task using Gemini
   const generateTickets = async (taskId: string): Promise<Ticket[]> => {
-    // In a real implementation, this would call your API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
-        if (taskIndex === -1) {
-          resolve([]);
-          return;
-        }
-        
-        // Example generated tickets
-        const newTickets: Ticket[] = [
-          {
-            id: `ticket_${Math.random().toString(36).substring(7)}`,
-            title: `Research for ${tasks[taskIndex].title}`,
-            description: "Conduct initial research to gather requirements and references.",
-            status: "To Do",
-            priority: 1,
-            created_at: new Date().toISOString(),
-            tags: ["research", "planning"],
-            estimated_time: 90
-          },
-          {
-            id: `ticket_${Math.random().toString(36).substring(7)}`,
-            title: `Design UI for ${tasks[taskIndex].title}`,
-            description: "Create mockups and design specifications.",
-            status: "To Do",
-            priority: 2,
-            created_at: new Date().toISOString(),
-            tags: ["design", "ui/ux"],
-            estimated_time: 180
-          },
-          {
-            id: `ticket_${Math.random().toString(36).substring(7)}`,
-            title: `Implement ${tasks[taskIndex].title}`,
-            description: "Code the main functionality based on the design specs.",
-            status: "To Do",
-            priority: 2,
-            created_at: new Date().toISOString(),
-            tags: ["development", "implementation"],
-            estimated_time: 240
-          },
-          {
-            id: `ticket_${Math.random().toString(36).substring(7)}`,
-            title: `Test ${tasks[taskIndex].title}`,
-            description: "Conduct thorough testing to ensure quality and functionality.",
-            status: "To Do",
-            priority: 3,
-            created_at: new Date().toISOString(),
-            tags: ["testing", "qa"],
-            estimated_time: 120
-          }
-        ];
-        
-        setTasks(prev => {
-          const newTasks = [...prev];
-          newTasks[taskIndex] = {
-            ...newTasks[taskIndex],
-            tickets: newTickets
-          };
-          return newTasks;
+    setIsGeneratingTickets(true);
+    
+    try {
+      if (!geminiApiKey) {
+        toast("No API key found", {
+          description: "Please add your Gemini API key to enable AI-powered task breakdown",
+          duration: 5000,
         });
-        
-        resolve(newTickets);
-      }, 2000); // Simulate API delay
-    });
+        return [];
+      }
+      
+      const taskIndex = tasks.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) {
+        throw new Error("Task not found");
+      }
+      
+      // In a real implementation, this would call Google's Generative AI API
+      // For now we'll use a simulated response
+      
+      // For a real implementation, you would use:
+      // const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "Authorization": `Bearer ${geminiApiKey}`
+      //   },
+      //   body: JSON.stringify({
+      //     contents: [{
+      //       parts: [{
+      //         text: `Break down the following task into 3-7 smaller tickets:
+      //               Task: ${tasks[taskIndex].title}
+      //               Description: ${tasks[taskIndex].description}
+      //               Return a JSON array of tickets with title, description, priority (1-5), estimated time in minutes, and tags.`
+      //       }]
+      //     }]
+      //   })
+      // });
+      
+      // Simulate API call with a delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const sampleTickets = [
+        {
+          title: `Research for ${tasks[taskIndex].title}`,
+          description: "Gather requirements, conduct market research, and document findings for the team.",
+          priority: 1,
+          estimated_time: 120,
+          tags: ["research", "planning", "documentation"]
+        },
+        {
+          title: `Design UI for ${tasks[taskIndex].title}`,
+          description: "Create wireframes, mockups, and final design assets following our design system.",
+          priority: 2,
+          estimated_time: 180,
+          tags: ["design", "ui/ux", "creative"]
+        },
+        {
+          title: `Develop MVP for ${tasks[taskIndex].title}`,
+          description: "Implement core functionality based on the designs and requirements document.",
+          priority: 2,
+          estimated_time: 240,
+          tags: ["development", "frontend", "backend"]
+        },
+        {
+          title: `Test ${tasks[taskIndex].title}`,
+          description: "Perform thorough testing to ensure functionality, usability, and performance meet expectations.",
+          priority: 3,
+          estimated_time: 120,
+          tags: ["testing", "qa", "quality"]
+        },
+        {
+          title: `Deploy ${tasks[taskIndex].title}`,
+          description: "Prepare and execute deployment to production environment with proper monitoring and rollback plan.",
+          priority: 3,
+          estimated_time: 60,
+          tags: ["devops", "deployment", "production"]
+        }
+      ];
+      
+      const newTickets: Ticket[] = sampleTickets.map((ticketData, idx) => ({
+        id: `ticket_${taskId}_${Date.now()}_${idx}`,
+        title: ticketData.title,
+        description: ticketData.description,
+        status: "To Do",
+        priority: ticketData.priority,
+        created_at: new Date().toISOString(),
+        tags: ticketData.tags,
+        estimated_time: ticketData.estimated_time
+      }));
+      
+      setTasks(prev => {
+        const newTasks = [...prev];
+        newTasks[taskIndex] = {
+          ...newTasks[taskIndex],
+          tickets: newTickets
+        };
+        return newTasks;
+      });
+      
+      toast("Task breakdown complete", {
+        description: `${newTickets.length} tickets created from your task`,
+      });
+      
+      return newTickets;
+    } catch (error) {
+      console.error("Error generating tickets:", error);
+      toast("Error generating tickets", {
+        description: "There was an error breaking down your task. Please try again.",
+      });
+      return [];
+    } finally {
+      setIsGeneratingTickets(false);
+    }
   };
   
   // Update ticket status
@@ -488,6 +549,9 @@ export function TaskManagementProvider({ children }: { children: ReactNode }) {
         tasks,
         kanbanData,
         groupedTickets,
+        geminiApiKey,
+        setGeminiApiKey,
+        isGeneratingTickets,
         createTask,
         generateTickets,
         updateTicketStatus,
